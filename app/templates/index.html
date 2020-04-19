@@ -1,0 +1,219 @@
+<!doctype html>
+<title>My Application</title>
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.4.1/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.4.1/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.4.1/dist/js/uikit-icons.min.js"></script>
+{% endblock %}
+{% block body %}
+<div class="uk-column-1-2 uk-margin uk-column-divider">
+    <div class="uk-column-span uk-margin uk-align-center">
+        <h1 class="uk-heading-small uk-text-center">
+            Enter a text to get it's hash
+        </h1>
+    </div>
+
+    <p class="uk-height-small">
+        <textarea id="text4hash" class="uk-textarea uk-align-center uk-width-medium" rows="5" placeholder="Textarea"></textarea>
+        <button onclick="hashText()" class="uk-button uk-align-center uk-button-default">Submit</button>
+    </p>
+
+    <p class="uk-height-small uk-text-middle uk-text-center">
+        <p class="uk-text-center uk-text-middle">
+            Input: <span id="original">{{ user_input }}</span>
+        </p>
+        <p class="uk-text-center uk-text-middle">
+            Hash: <span id="hashed">{{ user_hash }}</span>
+        </p>
+    </p>
+
+    <div class="uk-column-span uk-margin uk-align-center">
+        <h1 class="uk-heading-small uk-text-center">
+            Send a file to get it's message digest
+        </h1>
+    </div>
+
+    <p class="uk-height-small">
+        <div class="uk-align-center" uk-form-custom="target: true">
+            <input id="file4digest" class="uk-align-center" type="file">
+            <input class="uk-input uk-align-center uk-form-width-medium" type="text" placeholder="Select file" disabled>
+        </div>
+        <button onclick="hashFile()" class="uk-button uk-align-center uk-button-default">submit</button>
+        <br><br><br>
+    </p>
+
+    <p class="uk-height-small">
+        <p class="uk-text-center uk-text-middle">
+            Message digest: <span id="digest">{{ user_hash }}</span>
+        </p>
+    </p>
+
+    <div class="uk-column-span uk-margin uk-align-center">
+        <h1 class="uk-heading-small uk-text-center">
+            Send two files in the same format to compare them
+        </h1>
+    </div>
+
+    <p class="uk-height-small">
+        <div class="uk-align-center" uk-form-custom="target: true">
+            <input id="file1" class="uk-align-center" type="file">
+            <input class="uk-input uk-align-center uk-form-width-medium" type="text" placeholder="Select file" disabled>
+        </div>
+    </p>
+
+    <p class="uk-height-small">
+        <div class="uk-align-center" uk-form-custom="target: true">
+            <input id="file2" class="uk-align-center" type="file">
+            <input class="uk-input uk-align-center uk-form-width-medium" type="text" placeholder="Select file" disabled>
+        </div>
+    </p>
+
+    <div class="uk-column-span uk-margin uk-align-center">
+        <button onclick="compareFiles()" class="uk-button uk-align-center uk-button-default">submit</button>
+        <p id="res">
+            <p class="uk-text-center uk-text-middle">
+                Message digest #1: <span id="digest1">{{ user_hash }}</span>
+            </p>
+            <p class="uk-text-center uk-text-middle">
+                Message digest #2: <span id="digest2">{{ user_hash }}</span>
+            </p>
+            <p class="uk-text-center uk-text-middle">
+                Same files: <span id="same">{{ user_hash }}</span>
+            </p>
+        </p>
+    </div>
+
+    <div class="uk-column-span uk-margin uk-align-center">
+        <h1 class="uk-heading-small uk-text-center">
+            Generate collisions automatically for simple hashing algorithm
+        </h1>
+
+        <p>
+            <div class="uk-align-center">
+                <input id="iters" class="uk-input uk-align-center uk-form-width-medium" type="number" min="100" max="1500">
+            </div>
+            <button onclick="simpleCollisions()" class="uk-button uk-align-center uk-button-default">submit</button>
+        </p>
+
+        <div class="uk-text-center">
+            Percent of collisions: <span id="col_percent">{{ user_hash }}</span>%
+        </div>
+
+        <div uk-filter="target: .js-filter">
+
+            <ul class="uk-subnav uk-subnav-pill">
+            </ul>
+        
+            <ul class="js-filter uk-child-width-1-2 uk-child-width-1-3@m uk-text-center" uk-grid>
+            </ul>
+        
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script>
+    function checkFiles(filename1, filename2) {
+        if (filename1.slice(filename1.lastIndexOf('.'), -1) == filename2.slice(filename2.lastIndexOf('.'), -1)){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    function getFileName(fullPath) {
+        var startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+        var filename = fullPath.substring(startIndex);
+        
+        if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
+            filename = filename.substring(1);
+        }
+        
+        return filename;
+    }
+
+    function hashText() {
+        axios.post('/hash', {
+            text: document.getElementById("text4hash").value
+        })
+        .then((response) => {
+            document.getElementById("original").innerText = document.getElementById("text4hash").value;
+            document.getElementById("hashed").innerText = response.data.hashed;
+            document.getElementById("text4hash").value = "";
+        });
+    }
+
+    function hashFile() {
+        var formData = new FormData();
+        var fileField = document.getElementById("file4digest");
+        formData.append("file", fileField.files[0]);
+        axios.post('/hash', formData, {
+            headers: {
+            'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then((response) => {
+            document.getElementById("digest").innerText = response.data.hashed;
+            fileField.files = [];
+        });
+    }
+
+    function compareFiles() {
+        var fileField1 = document.getElementById("file1");
+        var fileField2 = document.getElementById("file2");
+
+        var check = checkFiles(
+            getFileName(fileField1.value),
+            getFileName(fileField2.value)
+        )
+
+        if (check) {
+            var formData = new FormData();
+
+            formData.append("first", fileField1.files[0]);
+            formData.append("second", fileField2.files[0]);
+
+            axios.post('/compare', formData, {
+                headers: {
+                'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then((response) => {
+                console.log(response.data);
+
+                document.getElementById("digest1").innerText = response.data.hash1;
+                document.getElementById("digest2").innerText = response.data.hash2;
+                document.getElementById("same").innerText = response.data.same;
+                fileField1.files = [];
+                fileField2.files = [];
+            });
+        }
+    }
+
+    function simpleCollisions() {
+        axios.post('/generate_simple_collisions', {
+            iters_num: parseInt(document.getElementById("iters").value)
+        })
+        .then((response) => {
+            document.getElementById("col_percent").innerText = response.data.percent;
+
+            keys = ""
+            values = ""
+
+            for (let [key, value] of Object.entries(response.data.results)) {
+                
+                keys += `<li uk-filter-control=".c${key}"><a href="#">${key}</a></li>`
+                for (let i = 0; i < value.length; ++i){
+                    values += `<li class="c${key}"><div class="uk-card uk-card-default uk-card-body">${value[i]}</div></li>`
+                }
+            }
+
+            document.getElementsByClassName("uk-subnav-pill")[0].innerHTML = keys;
+            document.getElementsByClassName("js-filter")[0].innerHTML = values;
+        });
+    }
+
+</script>
+{% endblock %}
