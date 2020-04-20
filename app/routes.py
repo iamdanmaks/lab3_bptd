@@ -5,6 +5,7 @@ from flask import render_template
 from app import app
 from app import hashing
 from app.collisions import create_collisions
+from app.md5_collision import create_collisions_md5
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -58,7 +59,6 @@ def compare_objects():
 @app.route('/generate_simple_collisions', methods=['POST'])
 def generate_simple_collisions():
     if request.method == 'POST':
-        print(request.json)
         result = create_collisions(request.json.get('iters_num'))
         col_num = sum([len(v) for k, v in result.items()])
 
@@ -66,3 +66,9 @@ def generate_simple_collisions():
             "results": result,
             "percent": int((col_num / request.json.get('iters_num')) * 100)
         })
+
+
+@app.route('/generate_md5_collisions', methods=['POST'])
+def generate_md5_collisions():
+    if request.method == 'POST':
+        return jsonify(create_collisions_md5())

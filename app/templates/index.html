@@ -96,7 +96,7 @@
         </p>
 
         <div class="uk-text-center">
-            Percent of collisions: <span id="col_percent">{{ user_hash }}</span>%
+            Percent of collisions: <span id="col_percent">{{ user_hash }}</span>
         </div>
 
         <div uk-filter="target: .js-filter">
@@ -110,10 +110,22 @@
         </div>
     </div>
 
+    <div class="uk-column-span uk-margin uk-align-center">
+            <h1 class="uk-heading-small uk-text-center">
+                Generate MD5 collisions automatically
+            </h1>
+            <button onclick="md5Collisions()" class="uk-button uk-align-center uk-button-default">start</button>
+            <div class="uk-text-center">
+                Collisions: <span id="md5">Wait for execution...</span>
+            </div>
+        <progress id="js-progressbar" class="uk-progress" value="0" max="950"></progress>
+    </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
 <script>
+
     function checkFiles(filename1, filename2) {
         if (filename1.slice(filename1.lastIndexOf('.'), -1) == filename2.slice(filename2.lastIndexOf('.'), -1)){
             return true;
@@ -197,7 +209,7 @@
             iters_num: parseInt(document.getElementById("iters").value)
         })
         .then((response) => {
-            document.getElementById("col_percent").innerText = response.data.percent;
+            document.getElementById("col_percent").innerText = response.data.percent + '%';
 
             keys = ""
             values = ""
@@ -213,6 +225,37 @@
             document.getElementsByClassName("uk-subnav-pill")[0].innerHTML = keys;
             document.getElementsByClassName("js-filter")[0].innerHTML = values;
         });
+    }
+
+    function md5Collisions() {
+        UIkit.util.ready(function () {
+
+            var bar = document.getElementById('js-progressbar');
+
+            var animate = setInterval(function () {
+
+                bar.value += 10;
+
+                if (bar.value >= bar.max) {
+                    clearInterval(animate);
+                }
+
+            }, 1000);
+
+        });
+
+        axios.post('/generate_md5_collisions')
+        .then((response) => {
+            if (Object.keys(response.data).length === 0 && response.data.constructor === Object) {
+                document.getElementById("md5").innerText = "No collision was found"
+            }
+            else {
+                var hash = Object.keys(response.data)[0];
+                document.getElementById("md5").innerText = hash + ": " + res[hash].join(" ");
+            }
+        });
+
+        document.getElementById("js-progressbar").value = "0";
     }
 
 </script>
